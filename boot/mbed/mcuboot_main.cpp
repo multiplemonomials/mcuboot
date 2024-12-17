@@ -23,6 +23,10 @@
 #include "bootutil/image.h"
 #include "hal/serial_api.h"
 #include "platform/mbed_application.h"
+#include "mbed.h"
+
+#define SEL_STM 0
+#define SEL_GPU 1
 
 #if (MCUBOOT_CRYPTO_BACKEND == MBEDTLS)
 #include "mbedtls/platform.h"
@@ -48,6 +52,9 @@ int default_CSPRNG(uint8_t *dest, unsigned int size) { return 0; }
 
 int main()
 {
+    DigitalOut sfselect(SPIF_SEL); 
+    sfselect.write(SEL_STM); // Claim STM access to serial flash
+
     int rc;
 
 #ifdef MCUBOOT_HAVE_LOGGING
