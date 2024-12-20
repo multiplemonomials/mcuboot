@@ -430,16 +430,32 @@ done:
  */
 int boot_get_current_version(struct image_version *version)
 {
-    struct boot_loader_state state;
-    struct boot_status status;
-    struct image_header hdr;
-    int rc = 0;
     assert(version != NULL);
-    rc = boot_read_image_header(&state, 0, &hdr, &status);
+
+    struct boot_loader_state boot_data;
+    struct boot_loader_state *state = &boot_data;
+    
+    struct boot_status _bs;
+    struct boot_status *bs = &_bs;
+
+    memset(&boot_data, 0, sizeof(struct boot_loader_state));
+    
+    boot_status_reset(bs);
+    int rc = swap_read_status(state, bs);
+    if (rc != 0) {
+        BOOT_LOG_WRN("Failed reading boot status; Image=%u", BOOT_CURR_IMG(state));
+        return 1;
+    }
+    
+    struct image_header _hdr;
+    struct image_header *hdr = &_hdr;
+   
+    rc = boot_read_image_header(state, BOOT_PRIMARY_SLOT, hdr, bs);
     if (rc != 0) {
         return rc;
     }
+    
     /** Copy the header's version struct over into the caller-supplied buffer */
-    memcpy(version, &hdr.ih_ver, sizeof(struct image_version));
+    memcpy(version, &hdr->ih_ver, sizeof(struct image_version));
     return 0;
 }
