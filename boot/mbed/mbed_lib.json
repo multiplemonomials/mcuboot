@@ -151,6 +151,12 @@
             "macro_name": "MCUBOOT_DOWNGRADE_PREVENTION",
             "value": null
         },
+        "downgrade-prevention-security-counter": {
+            "help": "Security counter is used for version eligibility check instead of pure version. When this option is set, any upgrade must have greater or equal security counter value.",
+            "macro_name": "MCUBOOT_DOWNGRADE_PREVENTION_SECURITY_COUNTER",
+            "accepted_values": [true, false],
+            "value": false
+        },
         "hw-rollback-protection": {
             "help": "Hardware rollback protection (NOT TESTED)",
             "macro_name": "MCUBOOT_HW_ROLLBACK_PROT",
