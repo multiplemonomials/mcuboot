@@ -156,12 +156,41 @@ boot_slots_compatible(struct boot_loader_state *state)
     if ((num_sectors_primary > BOOT_MAX_IMG_SECTORS) ||
         (num_sectors_secondary > BOOT_MAX_IMG_SECTORS)) {
         BOOT_LOG_WRN("Cannot upgrade: more sectors than allowed");
+        BOOT_LOG_WRN("  pri_sectors=%lu sec_sectors=%lu BOOT_MAX_IMG_SECTORS=%u",
+                     (unsigned long)num_sectors_primary,
+                     (unsigned long)num_sectors_secondary,
+                     (unsigned)BOOT_MAX_IMG_SECTORS);
         return 0;
     }
 
 #ifndef MCUBOOT_OVERWRITE_ONLY
     scratch_sz = boot_scratch_area_size(state);
 #endif
+
+    {
+        unsigned long pri_sec_last = (unsigned long)(num_sectors_primary > 0
+            ? boot_img_sector_size(state, BOOT_PRIMARY_SLOT, num_sectors_primary - 1)
+            : 0);
+        unsigned long sec_sec_last = (unsigned long)(num_sectors_secondary > 0
+            ? boot_img_sector_size(state, BOOT_SECONDARY_SLOT, num_sectors_secondary - 1)
+            : 0);
+
+        BOOT_LOG_INF("checking slot geometry for scratch swap");
+        BOOT_LOG_INF("  primary:   sectors=%lu fa_size=%lu B sec0=%lu B sec_last=%lu B",
+                     (unsigned long)num_sectors_primary,
+                     (unsigned long)flash_area_get_size(BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT)),
+                     (unsigned long)boot_img_sector_size(state, BOOT_PRIMARY_SLOT, 0),
+                     pri_sec_last);
+        BOOT_LOG_INF("  secondary: sectors=%lu fa_size=%lu B sec0=%lu B sec_last=%lu B",
+                     (unsigned long)num_sectors_secondary,
+                     (unsigned long)flash_area_get_size(BOOT_IMG_AREA(state, BOOT_SECONDARY_SLOT)),
+                     (unsigned long)boot_img_sector_size(state, BOOT_SECONDARY_SLOT, 0),
+                     sec_sec_last);
+        BOOT_LOG_INF("  BOOT_MAX_IMG_SECTORS=%u", (unsigned)BOOT_MAX_IMG_SECTORS);
+#ifndef MCUBOOT_OVERWRITE_ONLY
+        BOOT_LOG_INF("  scratch:   %lu B", (unsigned long)scratch_sz);
+#endif
+    }
 
     /*
      * The following loop scans all sectors in a linear fashion, assuring that
@@ -180,12 +209,23 @@ boot_slots_compatible(struct boot_loader_state *state)
             i++;
             j++;
         } else if (sz0 < sz1) {
-            sz0 += boot_img_sector_size(state, BOOT_PRIMARY_SLOT, i);
+            size_t pri_sec_sz = boot_img_sector_size(state, BOOT_PRIMARY_SLOT, i);
+
+            sz0 += pri_sec_sz;
             /* Guarantee that multiple sectors of the secondary slot
              * fit into the primary slot.
              */
             if (smaller == 2) {
                 BOOT_LOG_WRN("Cannot upgrade: slots have non-compatible sectors");
+                BOOT_LOG_WRN("  expected only secondary sectors to extend this span");
+                BOOT_LOG_WRN("  pri_idx=%lu sec_idx=%lu",
+                             (unsigned long)i, (unsigned long)j);
+                BOOT_LOG_WRN("  window_off_pri=%lu B window_off_sec=%lu B",
+                             (unsigned long)sz0, (unsigned long)sz1);
+                BOOT_LOG_WRN("  pri_sec_sz=%lu B sec_sec_sz=%lu B",
+                             (unsigned long)pri_sec_sz,
+                             (unsigned long)boot_img_sector_size(state, BOOT_SECONDARY_SLOT, j));
+                BOOT_LOG_WRN("  sector boundaries must align so each slot partitions the same byte ranges");
                 return 0;
             }
             smaller = 1;
@@ -207,6 +247,15 @@ boot_slots_compatible(struct boot_loader_state *state)
              */
             if (smaller == 1) {
                 BOOT_LOG_WRN("Cannot upgrade: slots have non-compatible sectors");
+                BOOT_LOG_WRN("  expected only primary sectors to extend this span");
+                BOOT_LOG_WRN("  pri_idx=%lu sec_idx=%lu",
+                             (unsigned long)i, (unsigned long)j);
+                BOOT_LOG_WRN("  window_off_pri=%lu B window_off_sec=%lu B",
+                             (unsigned long)sz0, (unsigned long)sz1);
+                BOOT_LOG_WRN("  pri_sec_sz=%lu B sec_sec_sz=%lu B",
+                             (unsigned long)boot_img_sector_size(state, BOOT_PRIMARY_SLOT, i),
+                             (unsigned long)sector_size);
+                BOOT_LOG_WRN("  sector boundaries must align so each slot partitions the same byte ranges");
                 return 0;
             }
             smaller = 2;
@@ -221,6 +270,8 @@ boot_slots_compatible(struct boot_loader_state *state)
              */
             if (sz0 > scratch_sz || sz1 > scratch_sz) {
                 BOOT_LOG_WRN("Cannot upgrade: not all sectors fit inside scratch");
+                BOOT_LOG_WRN("  swap_window=%lu B scratch=%lu B",
+                             (unsigned long)sz0, (unsigned long)scratch_sz);
                 return 0;
             }
             smaller = sz0 = sz1 = 0;
@@ -233,6 +284,10 @@ boot_slots_compatible(struct boot_loader_state *state)
         (j != num_sectors_secondary) ||
         (primary_slot_sz != secondary_slot_sz)) {
         BOOT_LOG_WRN("Cannot upgrade: slots are not compatible");
+        BOOT_LOG_WRN("  pri_idx=%lu/%lu sec_idx=%lu/%lu pri_span=%lu B sec_span=%lu B",
+                     (unsigned long)i, (unsigned long)num_sectors_primary,
+                     (unsigned long)j, (unsigned long)num_sectors_secondary,
+                     (unsigned long)primary_slot_sz, (unsigned long)secondary_slot_sz);
         return 0;
     }
 #endif
@@ -807,23 +862,45 @@ int app_max_size(struct boot_loader_state *state)
             i++;
             j++;
         } else if (sz0 < sz1) {
-            sz0 += boot_img_sector_size(state, BOOT_PRIMARY_SLOT, i);
+            size_t pri_sec_sz = boot_img_sector_size(state, BOOT_PRIMARY_SLOT, i);
+
+            sz0 += pri_sec_sz;
             /* Guarantee that multiple sectors of the secondary slot
              * fit into the primary slot.
              */
             if (smaller == 2) {
                 BOOT_LOG_WRN("Cannot upgrade: slots have non-compatible sectors");
+                BOOT_LOG_WRN("  expected only secondary sectors to extend this span");
+                BOOT_LOG_WRN("  pri_idx=%lu sec_idx=%lu",
+                             (unsigned long)i, (unsigned long)j);
+                BOOT_LOG_WRN("  window_off_pri=%lu B window_off_sec=%lu B",
+                             (unsigned long)sz0, (unsigned long)sz1);
+                BOOT_LOG_WRN("  pri_sec_sz=%lu B sec_sec_sz=%lu B",
+                             (unsigned long)pri_sec_sz,
+                             (unsigned long)boot_img_sector_size(state, BOOT_SECONDARY_SLOT, j));
+                BOOT_LOG_WRN("  sector boundaries must align so each slot partitions the same byte ranges");
                 return 0;
             }
             smaller = 1;
             i++;
         } else {
-            sz1 += boot_img_sector_size(state, BOOT_SECONDARY_SLOT, j);
+            size_t sec_sec_sz = boot_img_sector_size(state, BOOT_SECONDARY_SLOT, j);
+
+            sz1 += sec_sec_sz;
             /* Guarantee that multiple sectors of the primary slot
              * fit into the secondary slot.
              */
             if (smaller == 1) {
                 BOOT_LOG_WRN("Cannot upgrade: slots have non-compatible sectors");
+                BOOT_LOG_WRN("  expected only primary sectors to extend this span");
+                BOOT_LOG_WRN("  pri_idx=%lu sec_idx=%lu",
+                             (unsigned long)i, (unsigned long)j);
+                BOOT_LOG_WRN("  window_off_pri=%lu B window_off_sec=%lu B",
+                             (unsigned long)sz0, (unsigned long)sz1);
+                BOOT_LOG_WRN("  pri_sec_sz=%lu B sec_sec_sz=%lu B",
+                             (unsigned long)boot_img_sector_size(state, BOOT_PRIMARY_SLOT, i),
+                             (unsigned long)sec_sec_sz);
+                BOOT_LOG_WRN("  sector boundaries must align so each slot partitions the same byte ranges");
                 return 0;
             }
             smaller = 2;
@@ -838,6 +915,8 @@ int app_max_size(struct boot_loader_state *state)
              */
             if (sz0 > scratch_sz || sz1 > scratch_sz) {
                 BOOT_LOG_WRN("Cannot upgrade: not all sectors fit inside scratch");
+                BOOT_LOG_WRN("  swap_window=%lu B scratch=%lu B",
+                             (unsigned long)sz0, (unsigned long)scratch_sz);
                 return 0;
             }
             smaller = sz0 = sz1 = 0;
