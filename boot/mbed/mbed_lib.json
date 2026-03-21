@@ -92,6 +92,11 @@
             "macro_name": "MCUBOOT_MAX_IMG_SECTORS",
             "required": true
         },
+        "boot-max-align": {
+            "help": "Maximum alignment of image slots. This should be set to the maximum programming unit of the flash device.",
+            "macro_name": "MCUBOOT_BOOT_MAX_ALIGN",
+            "required": true
+        },        
         "read-granularity": {
             "help": "Granularity of read operations, in bytes. Enables a workaround if your block device does not support reading a single byte at a time. If this is used, it should be at least the value of your specific <blockdevice>->get_read_size() result.",
             "macro_name": "MCUBOOT_READ_GRANULARITY",
