@@ -28,6 +28,24 @@
 
 #include "mcuboot_config/mcuboot_config.h"
 
+#ifdef MCUBOOT_SWAP_PROGRESS_PRINTF
+#include <stdio.h>
+#define MCUBOOT_SWAP_PROGRESS_UPDATE(pct)                                  \
+    do {                                                                   \
+        printf("\rSwapping ... %u%%", (unsigned int)(pct));                \
+        fflush(stdout);                                                    \
+    } while (0)
+#define MCUBOOT_SWAP_PROGRESS_FINISH()                                     \
+    do {                                                                   \
+        printf("\n");                                                      \
+        fflush(stdout);                                                    \
+    } while (0)
+#else
+#define MCUBOOT_SWAP_PROGRESS_UPDATE(pct)                                  \
+    BOOT_LOG_INF("Swapping ... %u%%", (unsigned int)(pct))
+#define MCUBOOT_SWAP_PROGRESS_FINISH() ((void)0)
+#endif
+
 BOOT_LOG_MODULE_DECLARE(mcuboot);
 
 #if !defined(MCUBOOT_SWAP_USING_MOVE)
@@ -811,16 +829,28 @@ swap_run(struct boot_loader_state *state, struct boot_status *bs,
     BOOT_LOG_INF("Starting swap using scratch algorithm.");
 
     last_sector_idx = find_last_sector_idx(state, copy_size);
+    {
+        uint32_t total_swaps = find_swap_count(state, copy_size);
 
-    swap_idx = 0;
-    while (last_sector_idx >= 0) {
-        sz = boot_copy_sz(state, last_sector_idx, &first_sector_idx);
-        if (swap_idx >= (bs->idx - BOOT_STATUS_IDX_0)) {
-            boot_swap_sectors(first_sector_idx, sz, state, bs);
+        swap_idx = 0;
+        while (last_sector_idx >= 0) {
+            sz = boot_copy_sz(state, last_sector_idx, &first_sector_idx);
+            if (swap_idx >= (bs->idx - BOOT_STATUS_IDX_0)) {
+                boot_swap_sectors(first_sector_idx, sz, state, bs);
+                if (total_swaps > 0) {
+                    unsigned int pct =
+                        (unsigned int)((swap_idx + 1) * 100ULL / total_swaps);
+                    if (pct > 100) {
+                        pct = 100;
+                    }
+                    MCUBOOT_SWAP_PROGRESS_UPDATE(pct);
+                }
+            }
+
+            last_sector_idx = first_sector_idx - 1;
+            swap_idx++;
         }
-
-        last_sector_idx = first_sector_idx - 1;
-        swap_idx++;
+        MCUBOOT_SWAP_PROGRESS_FINISH();
     }
 
 }

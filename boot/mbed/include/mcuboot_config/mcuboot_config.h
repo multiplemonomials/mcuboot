@@ -92,4 +92,6 @@
     do {                   \
     } while (0)
 
+#define MCUBOOT_SWAP_PROGRESS_PRINTF
+
 #endif /* __MCUBOOT_CONFIG_H__ */
