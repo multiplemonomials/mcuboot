@@ -167,30 +167,30 @@ boot_slots_compatible(struct boot_loader_state *state)
     scratch_sz = boot_scratch_area_size(state);
 #endif
 
-    {
-        unsigned long pri_sec_last = (unsigned long)(num_sectors_primary > 0
-            ? boot_img_sector_size(state, BOOT_PRIMARY_SLOT, num_sectors_primary - 1)
-            : 0);
-        unsigned long sec_sec_last = (unsigned long)(num_sectors_secondary > 0
-            ? boot_img_sector_size(state, BOOT_SECONDARY_SLOT, num_sectors_secondary - 1)
-            : 0);
+//     {
+//         unsigned long pri_sec_last = (unsigned long)(num_sectors_primary > 0
+//             ? boot_img_sector_size(state, BOOT_PRIMARY_SLOT, num_sectors_primary - 1)
+//             : 0);
+//         unsigned long sec_sec_last = (unsigned long)(num_sectors_secondary > 0
+//             ? boot_img_sector_size(state, BOOT_SECONDARY_SLOT, num_sectors_secondary - 1)
+//             : 0);
 
-        BOOT_LOG_INF("checking slot geometry for scratch swap");
-        BOOT_LOG_INF("  primary:   sectors=%lu fa_size=%lu B sec0=%lu B sec_last=%lu B",
-                     (unsigned long)num_sectors_primary,
-                     (unsigned long)flash_area_get_size(BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT)),
-                     (unsigned long)boot_img_sector_size(state, BOOT_PRIMARY_SLOT, 0),
-                     pri_sec_last);
-        BOOT_LOG_INF("  secondary: sectors=%lu fa_size=%lu B sec0=%lu B sec_last=%lu B",
-                     (unsigned long)num_sectors_secondary,
-                     (unsigned long)flash_area_get_size(BOOT_IMG_AREA(state, BOOT_SECONDARY_SLOT)),
-                     (unsigned long)boot_img_sector_size(state, BOOT_SECONDARY_SLOT, 0),
-                     sec_sec_last);
-        BOOT_LOG_INF("  BOOT_MAX_IMG_SECTORS=%u", (unsigned)BOOT_MAX_IMG_SECTORS);
-#ifndef MCUBOOT_OVERWRITE_ONLY
-        BOOT_LOG_INF("  scratch:   %lu B", (unsigned long)scratch_sz);
-#endif
-    }
+//         BOOT_LOG_INF("checking slot geometry for scratch swap");
+//         BOOT_LOG_INF("  primary:   sectors=%lu fa_size=%lu B sec0=%lu B sec_last=%lu B",
+//                      (unsigned long)num_sectors_primary,
+//                      (unsigned long)flash_area_get_size(BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT)),
+//                      (unsigned long)boot_img_sector_size(state, BOOT_PRIMARY_SLOT, 0),
+//                      pri_sec_last);
+//         BOOT_LOG_INF("  secondary: sectors=%lu fa_size=%lu B sec0=%lu B sec_last=%lu B",
+//                      (unsigned long)num_sectors_secondary,
+//                      (unsigned long)flash_area_get_size(BOOT_IMG_AREA(state, BOOT_SECONDARY_SLOT)),
+//                      (unsigned long)boot_img_sector_size(state, BOOT_SECONDARY_SLOT, 0),
+//                      sec_sec_last);
+//         BOOT_LOG_INF("  BOOT_MAX_IMG_SECTORS=%u", (unsigned)BOOT_MAX_IMG_SECTORS);
+// #ifndef MCUBOOT_OVERWRITE_ONLY
+//         BOOT_LOG_INF("  scratch:   %lu B", (unsigned long)scratch_sz);
+// #endif
+//     }
 
     /*
      * The following loop scans all sectors in a linear fashion, assuring that
