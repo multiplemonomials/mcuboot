@@ -41,6 +41,9 @@
 #ifdef MCUBOOT_ENC_IMAGES
 #include "bootutil/enc_key.h"
 #endif
+#include "swap_priv.h"
+
+void boot_status_reset(struct boot_status *bs);
 
 BOOT_LOG_MODULE_DECLARE(mcuboot);
 
