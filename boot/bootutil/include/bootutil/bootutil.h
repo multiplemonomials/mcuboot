@@ -45,6 +45,8 @@ extern "C" {
 _Static_assert(BOOT_IMAGE_NUMBER > 0, "Invalid value for BOOT_IMAGE_NUMBER");
 
 struct image_header;
+struct image_version;
+
 /**
  * A response object provided by the boot loader code; indicates where to jump
  * to execute the main image.
@@ -90,6 +92,7 @@ struct boot_loader_state;
 void boot_state_clear(struct boot_loader_state *state);
 fih_ret context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp);
 const struct image_max_size *boot_get_max_app_size(void);
+int boot_get_current_version(struct image_version *version);
 
 #define SPLIT_GO_OK                 (0)
 #define SPLIT_GO_NON_MATCHING       (-1)
